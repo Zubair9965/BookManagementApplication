@@ -1,0 +1,138 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+class Book {
+    private int bookId;
+    private String bookName;
+
+    public Book(int bookId, String bookName) {
+        this.bookId = bookId;
+        this.bookName = bookName;
+    }
+
+    public int getBookId() {
+        return bookId;
+    }
+
+    public String getBookName() {
+        return bookName;
+    }
+
+    public void setBookName(String bookName) {
+        this.bookName = bookName;
+    }
+
+    @Override
+    public String toString() {
+        return "Book ID: " + bookId + ", Book Name: " + bookName;
+    }
+}
+
+public class BookDatabase {
+    private static final String FILE_PATH = "books.txt";
+
+    public static void main(String[] args) {
+        List<Book> books = new ArrayList<>();
+        loadBooks(books);
+
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("Choose an option:");
+            System.out.println("1. Add a Book");
+            System.out.println("2. Retrieve Books");
+            System.out.println("3. Update a Book");
+            System.out.println("4. Delete a Book");
+            System.out.println("5. Exit");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    addBook(books, scanner);
+                    break;
+                case 2:
+                    retrieveBooks(books);
+                    break;
+                case 3:
+                    updateBook(books, scanner);
+                    break;
+                case 4:
+                    deleteBook(books, scanner);
+                    break;
+                case 5:
+                    saveBooks(books);
+                    scanner.close();
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private static void loadBooks(List<Book> books) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    int bookId = Integer.parseInt(parts[0]);
+                    String bookName = parts[1].trim();
+                    books.add(new Book(bookId, bookName));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveBooks(List<Book> books) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Book book : books) {
+                writer.write(book.getBookId() + ", " + book.getBookName());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void addBook(List<Book> books, Scanner scanner) {
+        System.out.print("Enter Book Name: ");
+        String bookName = scanner.next();
+        int maxId = books.stream().mapToInt(Book::getBookId).max().orElse(0);
+        books.add(new Book(maxId + 1, bookName));
+        saveBooks(books);
+    }
+
+    private static void retrieveBooks(List<Book> books) {
+        for (Book book : books) {
+            System.out.println(book);
+        }
+    }
+
+    private static void updateBook(List<Book> books, Scanner scanner) {
+        System.out.print("Enter Book ID to Update: ");
+        int bookId = scanner.nextInt();
+        for (Book book : books) {
+            if (book.getBookId() == bookId) {
+                System.out.print("Enter New Book Name: ");
+                String newBookName = scanner.next();
+                book.setBookName(newBookName);
+                saveBooks(books);
+                System.out.println("Book updated successfully.");
+                return;
+            }
+        }
+        System.out.println("Book not found.");
+    }
+
+    private static void deleteBook(List<Book> books, Scanner scanner) {
+        System.out.print("Enter Book ID to Delete: ");
+        int bookId = scanner.nextInt();
+        books.removeIf(book -> book.getBookId() == bookId);
+        saveBooks(books);
+        System.out.println("Book deleted successfully.");
+    }
+}
